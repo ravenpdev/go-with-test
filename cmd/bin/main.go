@@ -2,13 +2,29 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"maps"
 	"math"
+	"net/http"
 	"slices"
 	"time"
 )
 
+func Greet(writer io.Writer, name string) {
+	fmt.Fprintf(writer, "Hello, %s", name)
+}
+
+func MyGreeterHandler(w http.ResponseWriter, r *http.Request) {
+	Greet(w, "world")
+}
+
 func main() {
+	log.Fatal(http.ListenAndServe(":5001", http.HandlerFunc(MyGreeterHandler)))
+
 	// goBasicTypes()
+
+	// defaultValues()
 
 	// goVariables()
 
@@ -16,17 +32,33 @@ func main() {
 
 	// goFor()
 
+	// forRangeLoop()
+
 	// goIfElse()
 
 	// goSwitch()
 
 	// goArrays()
 
-	goSlices()
+	// goSlices()
 
-	// defaultValues()
+	// goMaps()
 
-	// forRangeLoop()
+	// goVariadicFunctions(10, 20, 30)
+	// nums := []int{1, 2, 3, 4, 5}
+	// goVariadicFunctions(nums...)
+
+	// goPointers()
+
+	// goStructs()
+
+	// l := LinkedList{}
+	// l.Append(1)
+	// l.Append(2)
+	// l.Append(3)
+	// l.Prepend(0)
+	// l.Delete(2)
+	// l.PrintList()
 
 	// binary search
 	// nums := make([]int, 100)
@@ -46,6 +78,7 @@ func main() {
 
 	// sortedNumbers := selectionSort(randomNumber)
 	// fmt.Printf("sortedNumbers: %v\n", sortedNumbers)
+
 }
 
 func goBasicTypes() {
@@ -383,6 +416,137 @@ func goSlices() {
 	for idx, v := range pow {
 		fmt.Printf("2**%d = %d\n", idx, v)
 	}
+}
+
+func goMaps() {
+	// An interesting propery of maps is that you can modify them without passing as an address to it
+	// (e.g &myMap)
+	// This may make them feel like a "reference type"
+	// A map value is a pointer to a runtime.hmap structure
+
+	// A gotcha with maps is that hey can be an il value. A nil map behaves like an
+	// empty map when reading, but attempts to write to a nil map will cause a runtime panic.
+
+	// Therefor, you should never initialize a nil map variable:
+	// var m map[string]string
+
+	// Instead, you can initialize an empty map or use the make keyword to create a map for you:
+	// var dictionary = map[string]string{}
+	// or
+	// var dictionary = make(map[string]string)
+	// Both approaches create an emtpy hash map and point dictionary at it. Which ensures that you
+	// will never get a runtime panic.
+	var m = map[string]int{}
+
+	m["k1"] = 7
+	m["k2"] = 13
+	fmt.Println("map:", m)
+
+	// Get a value for a key with name[key] .
+	v1 := m["k1"]
+	fmt.Println("v1:", v1)
+
+	// If the key doesn't exist, the zero value of the value type is returned.
+	v3 := m["k2"]
+	fmt.Println("v3:", v3)
+	v4 := m["k3"]
+	fmt.Println("v4:", v4)
+
+	// The built in len returns the number of key/value pairs when called on a map
+	fmt.Println("len:", len(m))
+
+	// The builtin delete removes key/value pairs from a map
+	delete(m, "k2")
+	fmt.Println("map:", m)
+
+	// To remove all the key/value pairs from a map, use the clear builtin
+	clear(m)
+	fmt.Println("map:", m)
+
+	m["k4"] = 20
+	// The optional second return value when getting a value from a map indicates if the key
+	// was present in the map. This can be used to disambiguate between missing keys and keys with zero value 0 or "".
+	// Here we didn't need the value itself, so we ignored it with the blank indentifiers.
+	_, prs := m["k4"]
+	fmt.Println("prs:", prs)
+
+	// You can also declare and initialize a new map in the same line with this syntax.
+	n := map[string]int{"foo": 1, "bar": 2}
+	fmt.Println("map:", n)
+
+	// The maps package contains a number of useful utility functions.
+	n2 := map[string]int{"foo": 1, "bar": 2}
+	if maps.Equal(n, n2) {
+		fmt.Println("n == n2")
+	}
+}
+
+func goVariadicFunctions(nums ...int) {
+	total := 0
+	for _, val := range nums {
+		total += val
+	}
+
+	fmt.Println(total)
+}
+
+func goPointers() {
+	// Go has pointers. A pointer holds the memory address of a value.
+
+	// The type *T is a pointer to a T value. Its zero value is nil.
+	var p *int
+	fmt.Printf("type: %T, value: %v\n", p, p)
+
+	// The & operator generates a pointer to its operarnt
+	i := 42
+	p = &i // p points to i memory
+	fmt.Printf("i: %d, p address: %p, p value: %d\n", i, p, *p)
+	i = 35
+	fmt.Printf("i: %d, p address: %p, p value: %d\n", i, p, *p)
+
+	// The * operator denotes the pointer's underlying value.
+	// This is known a s"dereferencing"
+	fmt.Println(*p) // 42
+	// set i through the pointer
+	*p = 21
+	fmt.Printf("i: %d, p address: %p, p value: %d\n", i, p, *p)
+}
+
+type Vertex struct {
+	X int
+	Y int
+}
+
+func goStructs() {
+	// A struct is a collection of fields.
+	fmt.Println(Vertex{1, 2})
+
+	// Struct fields are accessed using a dot.
+	v := Vertex{1, 2}
+	v.X = 4
+	fmt.Println(v.X)
+
+	// Struct fields can be accessed through a struct pointer.
+
+	// To access the field X of a struct when we have the struct pointer p we could write
+	// (*p).X. However, that notation is cumbersome, so the language permits us instead
+	// to write just p.X, without the explicit dereference.
+	v1 := Vertex{1, 2}
+	p1 := &v1
+	p1.X = 1e9
+	fmt.Println(v1)
+
+	// A struct literal denotes a newly allocated struct value by listing the values
+	// of its fields.
+	// You can list just a subset of fields by using the Name: syntax. (And the order of named
+	// fields is irrelevant.)
+	// The special prefix & returns a pointer to the struct value.
+	v2 := Vertex{1, 2}  // has type Vertex
+	v3 := Vertex{X: 1}  // Y:0 is implicit
+	v4 := Vertex{}      // X:0 and Y:0
+	p2 := &Vertex{1, 2} // has type *Vertex
+
+	fmt.Println(v2, v3, v4, p2)
 }
 
 func defaultValues() {
