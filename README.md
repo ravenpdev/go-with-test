@@ -6,6 +6,7 @@
 - go test -bench=.
 - go test -bench=. -benchmem
 - go test -cover
+- go test -race
 
 ** Default zero values for all go types **
 
